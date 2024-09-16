@@ -47,7 +47,6 @@ router.post("/login",async(req,res)=>{
             });
         }
         user.cart_id=user.cart_id.toString()
-        console.log(user)
         const token = generateToken(user)
 
         // Crear una cookie HttpOnly con el token JWT
