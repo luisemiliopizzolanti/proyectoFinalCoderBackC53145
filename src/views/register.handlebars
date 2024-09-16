@@ -51,6 +51,10 @@
         document.getElementById('successMessage').innerText = result.msg;
         document.getElementById('successMessage').style.display = 'block';
         document.getElementById('errorMessage').style.display = 'none';
+        setTimeout(() => { 
+          //Redirecciono a la vista de productos
+          window.location.href="/views/products"
+        }, 3000);
       } else {
         document.getElementById('errorMessage').innerText = result.msg;
         document.getElementById('errorMessage').style.display = 'block';

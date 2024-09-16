@@ -35,7 +35,6 @@
       });
 
       const result = await response.json(); // Parsear la respuesta JSON
-      console.log(result.status)
       // Mostrar mensaje de éxito o error basado en la respuesta
       if (result.status==='ok') {
         document.getElementById('successMessage').innerText = `${result.msg} Redirigiendo... `  ;
