@@ -1,0 +1,206 @@
+<link rel="stylesheet" href="/views/css/style_cart.css">
+<script src="cookies.js"></script>
+<!-- Barra de navegación -->
+<div class="navbar">
+  <a href="/views/products">Productos</a>
+  <a href="#" class="logo">Mi CODER ECOMMERCE</a>
+</div>
+
+<!-- Contenedor principal del carrito -->
+<div class="container">
+  <h1>Tu Carrito</h1>
+
+  <!-- Tabla para la lista del carrito -->
+  <table class="cart-list" id="cart-items">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Subtotal</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Aquí se agregarán los productos dinámicamente -->
+    </tbody>
+  </table>
+
+  <!-- Mostrar el total acumulado -->
+  <div class="total" id="cart-total">
+    Total: $0.00
+  </div>
+
+  <!-- Botón para finalizar compra -->
+  <button class="btn-checkout" id="checkout-btn">Finalizar compra</button>
+
+  <!-- Contenedor para el mensaje de éxito y el resumen de compra -->
+  <div id="success-message" class="success-message" style="display: none;">
+    <h2>¡Felicidades, compra realizada!</h2>
+    <p>Su compra ha sido exitosa. Aquí está el resumen de la compra:</p>
+
+    <!-- Tabla para el resumen de la compra -->
+    <table class="order-summary" id="order-summary">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio Unitario</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Aquí se agregarán los productos del resumen dinámicamente -->
+      </tbody>
+    </table>
+
+    <!-- Total de la compra -->
+    <div class="total" id="order-total">
+      Total: $0.00
+    </div>
+
+    <!-- Botón para ver productos nuevamente -->
+    <button class="btn-add" id="back-to-products-btn">Volver a productos</button>
+  </div>
+</div>
+
+<script>
+  let total = 0;
+  let cart = [];
+
+  // Función para cargar los productos del carrito al cargar la página
+  async function loadCart() {
+    try {
+      const response = await fetch('/carts/getCart');
+      
+      if (response.ok) {
+        cart = await response.json();
+        renderCart();
+      } else {
+        alert('Error al cargar el carrito');
+      }
+    } catch (error) {
+      console.error('Error al cargar el carrito:', error);
+    }
+  }
+
+  // Función para renderizar los productos en el carrito
+  async function renderCart() {
+    const cartItemsContainer = document.querySelector('#cart-items tbody');
+    cartItemsContainer.innerHTML = '';
+    total = 0;
+
+    cart.products.forEach(product => {
+      const cartRow = document.createElement('tr');
+      const subtotal = product.product.price * product.quantity;
+
+      cartRow.innerHTML = `
+        <td class="product-name">
+          <div class="product-info">
+            <img src="${product.product.thumbnail}" alt="${product.product.title}">
+            <span>${product.product.title}</span>
+          </div>
+        </td>
+        <td>${product.quantity}</td>
+        <td>$${product.product.price.toFixed(2)}</td>
+        <td>$${subtotal.toFixed(2)}</td>
+        <td><button class="btn-remove">Eliminar</button></td>
+      `;
+
+      cartItemsContainer.appendChild(cartRow);
+      total += subtotal;
+
+      cartRow.querySelector('.btn-remove').addEventListener('click', async () => {
+        await removeProductFromCart(product.product._id);
+        restQuantity(product.quantity)
+      });
+    });
+
+    updateCartTotal();
+  }
+
+  function updateCartTotal() {
+    const totalElement = document.getElementById('cart-total');
+    totalElement.textContent = `Total: $${total.toFixed(2)}`;
+  }
+
+  async function removeProductFromCart(productId) {
+    try {
+      const response = await fetch(`/carts/deleteProduct/${productId}`, { method: 'DELETE' });
+      if (response.ok) {
+        loadCart();
+      } else {
+        alert('Error al eliminar el producto del carrito');
+      }
+    } catch (error) {
+      console.error('Error al eliminar el producto del carrito:', error);
+    }
+  }
+
+  loadCart();
+
+  // Función para finalizar la compra
+  document.getElementById('checkout-btn').addEventListener('click', async () => {
+    try {
+      const response = await fetch('/purchases/completePurchase', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Mostrar el mensaje de éxito y el resumen de compra
+        document.getElementById('success-message').style.display = 'block';
+
+        // Ocultar el carrito y el botón de finalizar compra
+        document.getElementById('cart-items').style.display = 'none';
+        document.getElementById('checkout-btn').style.display = 'none';
+
+        // Mostrar el resumen de la compra
+        renderOrderSummary();
+        //Reinicio el contador del carrito
+        resetQuantity();
+        // Botón para volver a la página de productos
+        document.getElementById('back-to-products-btn').addEventListener('click', () => {
+          window.location.href = '/views/products';
+        });
+      } else {
+        alert('Error al completar la compra');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al realizar la compra');
+    }
+  });
+
+  // Función para renderizar el resumen de la compra basado en el carrito
+  function renderOrderSummary() {
+    const orderSummaryContainer = document.querySelector('#order-summary tbody');
+    const orderTotalElement = document.getElementById('order-total');
+    orderSummaryContainer.innerHTML = '';
+
+    let orderTotal = 0;
+
+    cart.products.forEach(product => {
+      const subtotal = product.product.price * product.quantity;
+      orderTotal += subtotal;
+
+      const summaryRow = document.createElement('tr');
+      summaryRow.innerHTML = `
+        <td><img src="${product.product.thumbnail}" alt="${product.product.title}" width="75"></td>
+        <td>${product.product.title}</td>
+        <td>${product.quantity}</td>
+        <td>$${product.product.price.toFixed(2)}</td>
+        <td>$${subtotal.toFixed(2)}</td>
+      `;
+
+      orderSummaryContainer.appendChild(summaryRow);
+    });
+
+    // Actualizar el total del resumen
+    orderTotalElement.textContent = `Total: $${orderTotal.toFixed(2)}`;
+  }
+</script>
+

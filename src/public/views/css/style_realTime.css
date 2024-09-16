@@ -1,0 +1,138 @@
+
+  /* Estilo del formulario */
+  .container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #f0f8ff;
+    border: 1px solid #99ccff;
+    border-radius: 5px;
+  }
+
+  .container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  input, textarea, select {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #99ccff;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .btn-submit {
+    background-color: #0073e6;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .btn-submit:hover {
+    background-color: #005bb5;
+  }
+
+  /* Lista de productos existentes */
+  .product-list {
+    margin-top: 30px;
+  }
+
+  .product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #99ccff;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #f0f8ff;
+  }
+
+  .product-item div {
+    flex: 1;
+  }
+
+  .product-item button {
+    margin-left: 10px;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .btn-modify {
+    background-color: #0073e6;
+    color: white;
+  }
+
+  .btn-modify:hover {
+    background-color: #005bb5;
+  }
+
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-cancel-modify {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-top: 5px;
+    display: none;
+  }
+
+  .btn-delete:hover {
+    background-color: #c82333;
+  }
+
+  /* Paginación */
+  .pagination {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .pagination button {
+    background-color: #0073e6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 0 5px;
+    font-size: 16px;
+  }
+
+  .pagination button[disabled] {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .pagination button:hover:not([disabled]) {
+    background-color: #005bb5;
+  }

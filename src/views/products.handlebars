@@ -1,0 +1,189 @@
+ <link rel="stylesheet" href="/views/css/style_home.css">
+<!-- Barra de navegación -->
+<div class="navbar">
+  {{#unless first_name}}
+    <a href="/views/register">Register</a>
+  {{/unless}}
+  {{#if first_name}}
+    <a  href="/users/logout">Logout</a>
+  {{else}}
+    <a href="/views/login">Login</a>
+  {{/if}}
+  {{#if first_name}}
+    <a href="/views/cart">Carrito <span id="cart-count" class="cart-count">0</span></a>
+  {{/if}}
+    <a href="#" class="logo">Mi CODER ECOMMERCE</a>
+  {{#if first_name}}
+    <a id="userName">Bienvenido {{first_name}}</a>
+  {{else}}
+    <a id="userName">Bienvenido Invitado</a>
+   {{/if}}
+</div>
+
+<!-- Contenedor principal de productos -->
+<div class="container">
+  <div class="pagination-settings">
+    <label for="items-per-page">Productos por página:</label>
+    <select id="items-per-page">
+      <option value="1">1</option>
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+    </select>
+  </div>
+
+  <div id="product-grid" class="product-grid">
+    <!-- Los productos se cargarán aquí dinámicamente -->
+  </div>
+
+  <div class="pagination">
+    <button id="prev-page" disabled>Anterior</button>
+    <button id="next-page">Siguiente</button>
+  </div>
+</div>
+
+<!-- Contenedor para el toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+  let cartCount = 0; // Variable para llevar la cuenta de productos en el carrito
+  let currentPage = 1; // Variable para manejar la paginación
+  let itemsPerPage = 10; // Valor predeterminado para la cantidad de productos por página
+
+  // Cargar los productos al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProducts(currentPage, itemsPerPage); // Cargar la primera página de productos con los productos por página predeterminados
+  });
+
+
+  // Escuchar cambios en el select de productos por página
+  document.getElementById('items-per-page').addEventListener('change', (event) => {
+    currentPage = 1
+    itemsPerPage = event.target.value; // Actualizar la cantidad de productos por página seleccionada
+    loadProducts(currentPage, itemsPerPage); // Volver a cargar los productos con la nueva cantidad
+  });
+
+  // Función para cargar los productos con fetch
+  async function loadProducts(page, itemsPerPage) {
+    try {
+      const response = await fetch(`/products?page=${page}&limit=${itemsPerPage}`);
+      const data = await response.json();
+
+      const productGrid = document.getElementById('product-grid');
+      productGrid.innerHTML = ''; // Limpiar la grilla de productos
+
+      data.payload.forEach(product => {
+        const productElement = document.createElement('div');
+        productElement.classList.add('product');
+        productElement.setAttribute('data-id', product._id); // Asignar el ID del producto
+        
+        productElement.innerHTML = `
+          <img src="${product.thumbnail}" alt="${product.title}">
+          <h3>${product.title}</h3>
+          <p>${product.description}</p>
+          <p><strong>Price:</strong> $${product.price}</p>
+          <div>
+            <input type="number" class="quantity" value="1" min="1">
+            <button class="btn-add">Agregar al carrito</button>
+          </div>
+        `;
+
+        productGrid.appendChild(productElement);
+      });
+
+      // Añadir eventos a los botones "Agregar al carrito" después de cargar los productos
+      addEventListenersToButtons();
+      
+      // Manejar la paginación
+      document.getElementById('prev-page').disabled = !data.hasPrevPage;
+      document.getElementById('next-page').disabled = !data.hasNextPage;
+    } catch (error) {
+      console.error('Error al cargar los productos:', error);
+    }
+  }
+
+  // Función para agregar eventos a los botones "Agregar al carrito"
+  function addEventListenersToButtons() {
+    const addToCartButtons = document.querySelectorAll('.btn-add');
+
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', async function() {
+        const productElement = this.closest('.product');
+        const productId = productElement.getAttribute('data-id');
+        const productName = productElement.querySelector('h3').textContent;
+        const quantity = productElement.querySelector('.quantity').value;
+        addProductToCart(productId, quantity, productName);
+      });
+    });
+  }
+
+  // Función para mostrar el mensaje tipo toast
+  function showToast(message, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+
+    // Aplicar clase según el tipo de mensaje (success o error)
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => { 
+      toast.className = toast.className.replace("show", ""); // Después de 3 segundos, oculta el toast
+    }, 3000);
+  }
+
+  // Función para actualizar el contador del carrito
+  function updateCartCount(quantity) {
+    cartCount += parseInt(quantity); // Incrementar la cantidad total en el carrito
+    //Creeo un cookie para guardar la cantidad del items del carrito por si cambio de pagina
+    setCookie('quantity', cartCount, {secure: true, 'max-age': 36000});
+    document.getElementById('cart-count').textContent = cartCount; // Actualizar el contenido del contador
+  }
+
+  // Función para agregar el producto al carrito
+  async function addProductToCart(productId, quantity, productName) {
+    try {
+      const response = await fetch('/carts/addProduct', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ productId, quantity })
+      });
+      
+      const data = await response.json();
+      if (data.status === 'ok') {
+        updateCartCount(quantity);
+        showToast(`${productName} agregado`, 'success');
+      } else {
+        showToast(`${productName} no agregado: ${data.msg}`, 'error');
+      }
+    } catch (error) {
+      showToast(`${productName} no agregado`, 'error');
+    }
+  }
+
+  // Funcionalidad de paginación
+  document.getElementById('next-page').addEventListener('click', () => {
+    currentPage += 1;
+    loadProducts(currentPage, itemsPerPage); // Cargar la siguiente página de productos
+  });
+
+  document.getElementById('prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+        currentPage -= 1;
+        loadProducts(currentPage, itemsPerPage); // Cargar la página anterior de productos
+        }
+     });
+
+ function loadProductsQuantity(){
+    checkCookie()
+    let cartQuantity =  getCookie("quantity")
+    updateCartCount(cartQuantity)
+}
+
+window.onload = function() {
+  loadProductsQuantity() 
+};
+
+</script>
+<script src="cookies.js"></script>
